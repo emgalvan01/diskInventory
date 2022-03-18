@@ -179,7 +179,7 @@ WHERE returned_date IS NULL;
 USE disk_inventoryeg;
 GO
 
-SELECT 'Disk Name'=disk_name, 'Release Date'=release_date, 'Type'=disk_type.description, 'Genre'=genre.description, 'Status'=status.description
+SELECT 'Disk Name'=disk_name, 'Release Date'=convert(varchar, release_date, 101), 'Type'=disk_type.description, 'Genre'=genre.description, 'Status'=status.description
 FROM disk
 JOIN disk_type
 	ON disk.disk_type_id = disk_type.disk_type_id
@@ -205,7 +205,7 @@ GROUP BY disk_name
 HAVING COUNT(*) > 1
 ORDER BY disk_name;
 
-SELECT 'Last'=lname, 'First'=fname, 'Disk Name'=disk_name, 'Borrowed Date'=	convert(varchar, borrowed_date, 23), 'Returned Date'=returned_date
+SELECT 'Disk Name'=disk_name, 'Borrowed Date'=	convert(varchar, borrowed_date, 23), 'Returned Date'=returned_date, 'Last Name'=lname, 'First Name'=fname
 FROM disk
 JOIN disk_has_borrower
 	ON disk.disk_id = disk_has_borrower.disk_id
