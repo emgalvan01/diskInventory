@@ -1,8 +1,8 @@
 /*********************************************************
 *	Original Author:    Emmanuel Galvan                
 *	Date Created:       02/25/2022                    
-*	Version:            2.0                            
-*	Date Last Modified: 03/18/2022                    
+*	Version:            3.0                            
+*	Date Last Modified: 03/28/2022                    
 *	Modified by:        Emmanuel Galvan                
 *	
 *	Modification log:  
@@ -10,6 +10,7 @@
 *	 Version 0.0 - 02/04/2021 -- ADDED database, added user and database user, also created all tables from PROJECT1
 *	 Version 1.0 - 03/11/2022 -- ADDED Insert statements
 *	 Version 2.0 - 03/18/2022 -- ADDED SELECT statemtents to display wanted information. Also created a VIEW
+*	 Version 3.0 - 03/28/2022 -- ADDED stored procs to ins in try/catch for error handling. Grant exe to user DiskUserEG
 *
 **********************************************************/
 use master;
@@ -234,3 +235,57 @@ JOIN borrower
 GROUP BY lname, fname
 HAVING COUNT(*) > 1
 ORDER BY lname, fname;
+
+-- Push to github
+USE disk_inventoryeg;
+DROP PROC IF EXISTS sp_ins_disk_has_borrower;
+go
+CREATE PROC sp_ins_disk_has_borrower
+	@borrower_id int, @disk_id int, @borrowed_date datetime2, @returned_date datetime2 = NULL
+AS
+BEGIN TRY
+	INSERT INTO disk_has_borrower
+		(borrower_id, disk_id, borrowed_date, returned_date)
+	VALUES
+		(@borrower_id, @disk_id, @borrowed_date, @returned_date);
+END TRY
+BEGIN CATCH
+	PRINT 'An error occured,';
+	PRINT 'Message: ' + CONVERT(VARCHAR(200), ERROR_MESSAGE());
+END CATCH
+go
+
+GRANT EXEC ON sp_ins_disk_has_borrower TO diskUsereg;
+go
+sp_ins_disk_has_borrower 1, 1, '03/27/2022', '03/28/2022'
+go
+sp_ins_disk_has_borrower 4, 5, '03/27/2022'
+go
+sp_ins_disk_has_borrower 44, 5, '03/27/2022'
+go
+
+DROP PROC IF EXISTS sp_upd_disk_has_borrower;
+go
+CREATE PROC sp_upd_disk_has_borrower
+	@disk_has_borrower_id int, @borrower_id int, @disk_id int, @borrowed_date datetime2, @returned_date datetime2 = NULL
+AS
+BEGIN TRY
+	UPDATE disk_has_borrower
+	SET borrower_id = @borrower_id,
+		disk_id = @disk_id,
+		borrowed_date = @borrowed_date,
+		returned_date = @returned_date
+	WHERE disk_has_borrower_id = @disk_has_borrower_id;
+END TRY
+BEGIN CATCH
+	PRINT 'An error occured,';
+	PRINT 'Message: ' + CONVERT(VARCHAR(200), ERROR_MESSAGE());
+END CATCH
+go
+GRANT EXEC ON sp_upd_disk_has_borrower TO diskUsereg;
+go
+declare @today datetime2 = getdate();
+exec sp_upd_disk_has_borrower 11, 2, 3, '03/03/2022', @today;
+go
+sp_upd_disk_has_borrower 11, 2, 3, '03/19/2022';
+go
