@@ -1,8 +1,8 @@
 /*********************************************************
 *	Original Author:    Emmanuel Galvan                
 *	Date Created:       02/25/2022                    
-*	Version:            3.0                            
-*	Date Last Modified: 03/28/2022                    
+*	Version:            4.0                            
+*	Date Last Modified: 03/30/2022                    
 *	Modified by:        Emmanuel Galvan                
 *	
 *	Modification log:  
@@ -10,7 +10,8 @@
 *	 Version 0.0 - 02/04/2021 -- ADDED database, added user and database user, also created all tables from PROJECT1
 *	 Version 1.0 - 03/11/2022 -- ADDED Insert statements
 *	 Version 2.0 - 03/18/2022 -- ADDED SELECT statemtents to display wanted information. Also created a VIEW
-*	 Version 3.0 - 03/28/2022 -- ADDED stored procs to ins in try/catch for error handling. Grant exe to user DiskUserEG
+*	 Version 3.0 - 03/28/2022 -- ADDED stored procs to ins in try/catch for error handling. Grant exe to user DiskUserEG (disk_has_borrower)
+*	 Version 4.0 - 03/30/2022 -- ADDED stored procs, ins, update, delete for disk and borrower
 *
 **********************************************************/
 use master;
@@ -289,3 +290,147 @@ exec sp_upd_disk_has_borrower 11, 2, 3, '03/03/2022', @today;
 go
 sp_upd_disk_has_borrower 11, 2, 3, '03/19/2022';
 go
+
+DROP PROC IF EXISTS sp_ins_disk;
+GO
+CREATE PROC sp_ins_disk
+	@disk_name nvarchar(60), @release_date date, @status_id int, @disk_type_id int, @genre_id int
+AS
+	BEGIN TRY
+		INSERT disk
+			(disk_name, release_date, status_id, disk_type_id, genre_id)
+		VALUES
+			(@disk_name, @release_date, @status_id, @disk_type_id, @genre_id);
+	END TRY
+	BEGIN CATCH
+		PRINT 'An error occured,';
+		PRINT 'Message: ' + CONVERT(VARCHAR(200), ERROR_MESSAGE());
+	END CATCH
+GO
+-- Add grant permissions
+GRANT EXECUTE ON sp_ins_disk TO diskUsereg;
+GO
+EXEC sp_ins_disk 'LEGENDADDY', '03/25/2022', 1, 1, 2
+GO -- No error
+EXEC sp_ins_disk 'LEGENDADDY', '03/25/2022', 1, 1, NULL
+GO -- Controlled Error
+
+DROP PROC IF EXISTS sp_upd_disk;
+GO
+CREATE PROC sp_upd_disk
+	@disk_id int, @disk_name nvarchar(60), @release_date date, @status_id int, @disk_type_id int, @genre_id int
+AS
+	BEGIN TRY
+		UPDATE disk
+		SET disk_name = @disk_name, 
+			release_date = @release_date,
+			status_id = @status_id,
+			disk_type_id = @disk_type_id,
+			genre_id = @genre_id 
+		WHERE disk_id = @disk_id;
+	END TRY
+	BEGIN CATCH
+		PRINT 'An error occured,';
+		PRINT 'Message: ' + CONVERT(VARCHAR(200), ERROR_MESSAGE());
+	END CATCH
+GO
+-- Add grant permissions
+GRANT EXECUTE ON sp_upd_disk TO diskUsereg;
+GO
+EXEC sp_upd_disk 1, 'Scorpion Deluxe', '06/29/2018', 1, 1, 2
+GO -- No Error
+EXEC sp_upd_disk 1, 'Scorpion Deluxe', '06/29/2018', NULL, 1, 2
+GO -- Controlled error
+
+DROP PROC IF EXISTS sp_del_disk;
+GO
+CREATE PROC sp_del_disk
+	@disk_id int
+AS
+	BEGIN TRY
+		DELETE FROM [dbo].[disk]
+			  WHERE disk_id = @disk_id;
+	END TRY
+	BEGIN CATCH
+		PRINT 'An error occured,';
+		PRINT 'Message: ' + CONVERT(VARCHAR(200), ERROR_MESSAGE());
+	END CATCH
+GO
+
+GRANT EXECUTE ON sp_del_disk TO diskUsereg;
+GO
+EXEC sp_del_disk 20; -- No error
+GO
+EXEC sp_del_disk 3; -- Controlled Error
+GO
+
+DROP PROC IF EXISTS sp_ins_borrower;
+GO
+CREATE PROC sp_ins_borrower
+	@fname NVARCHAR(60), @lname NVARCHAR(60), @phone_number VARCHAR(15)
+AS
+	BEGIN TRY
+		INSERT INTO borrower
+			(fname, lname, phone_number)
+		VALUES
+			(@fname, @lname, @phone_number)
+	END TRY
+	BEGIN CATCH
+		PRINT 'An error occured,';
+		PRINT 'Message: ' + CONVERT(VARCHAR(200), ERROR_MESSAGE());
+	END CATCH
+GO
+
+GRANT EXECUTE ON sp_ins_disk TO diskUsereg;
+GO
+EXEC sp_ins_borrower'Star', 'FOX', '919-919-999'
+GO -- No error
+EXEC sp_ins_borrower'Star', NULL, '919-919-999'
+GO -- Controlled Error
+
+DROP PROC IF EXISTS sp_upd_borrower;
+GO
+CREATE PROC sp_upd_borrower
+	@borrower_id int, @fname NVARCHAR(60), @lname NVARCHAR(60), @phone_number VARCHAR(15)
+AS
+	BEGIN TRY
+		UPDATE borrower
+		SET fname = @fname, 
+			lname = @lname,
+			phone_number = @phone_number
+		WHERE borrower_id = @borrower_id;
+	END TRY
+	BEGIN CATCH
+		PRINT 'An error occured,';
+		PRINT 'Message: ' + CONVERT(VARCHAR(200), ERROR_MESSAGE());
+	END CATCH
+GO
+
+GRANT EXECUTE ON sp_ins_disk TO diskUsereg;
+GO
+EXEC sp_upd_borrower 22, 'Star', 'Fox', '919-919-999'
+GO -- No error
+EXEC sp_upd_borrower 22, 'Star', NULL, '919-919-999'
+GO -- Controlled Error
+
+DROP PROC IF EXISTS sp_del_borrower;
+GO
+CREATE PROC sp_del_borrower
+	@borrower_id int
+AS
+	BEGIN TRY
+		DELETE FROM [dbo].[borrower]
+		WHERE borrower_id = borrower_id;
+	END TRY
+	BEGIN CATCH
+		PRINT 'An error occured,';
+		PRINT 'Message: ' + CONVERT(VARCHAR(200), ERROR_MESSAGE());
+	END CATCH
+GO
+
+GRANT EXECUTE ON sp_del_borrower TO diskUsereg;
+GO
+EXEC sp_del_borrower 20; -- No error
+GO
+EXEC sp_del_borrower 3; -- Controlled Error
+GO
